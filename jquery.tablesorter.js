@@ -1,7 +1,9 @@
 /*
  * 
- * TableSorter 2.0 - Client-side table sorting with ease!
- * Version 2.0.5b
+ * TableSorter (Multi-TBodies) 1.0 - Client-side table sorting with ease!
+ * Version 1.0.0b
+ * Forked by Renato Albano ~ Jan 24 2011
+ * TableSorter Forked Version 2.0.5b
  * @requires jQuery v1.2.3
  * 
  * Copyright (c) 2007 Christian Bach
@@ -114,6 +116,7 @@
                 cssAsc: "headerSortUp",
                 cssDesc: "headerSortDown",
                 cssChildRow: "expand-child",
+                cssGroupHeader: "group-header",
                 sortInitialOrder: "asc",
                 sortMultiSortKey: "shiftKey",
                 sortForce: null,
@@ -159,7 +162,14 @@
                 }
 
                 if (table.tBodies.length == 0) return; // In the case of empty tables
-                var rows = table.tBodies[0].rows;
+
+                var tbody = table.tBodies[0];
+
+                if($(tbody).hasClass(table.config.cssGroupHeader)) {
+                  tbody = table.tBodies[1];
+                }
+
+                var rows = tbody.rows;
 
                 if (rows[0]) {
 
@@ -251,43 +261,59 @@
                     var cacheTime = new Date();
                 }
 
-                var totalRows = (table.tBodies[0] && table.tBodies[0].rows.length) || 0,
-                    totalCells = (table.tBodies[0].rows[0] && table.tBodies[0].rows[0].cells.length) || 0,
-                    parsers = table.config.parsers,
+                var parsers = table.config.parsers,
                     cache = {
                         row: [],
                         normalized: []
                     };
 
-                for (var i = 0; i < totalRows; ++i) {
+                for(var j = 0, k = table.tBodies.length; j < k; j++) {
+
+                  var totalRows = (table.tBodies[j] && table.tBodies[j].rows.length) || 0,
+                      totalCells = (table.tBodies[j].rows[0] && table.tBodies[j].rows[0].cells.length) || 0;
+                      tbodyRow = [],
+                      tbodyNormalized = [];
+
+                  if($(table.tBodies[j]).hasClass(table.config.cssGroupHeader)) {
+                    continue;
+                  }
+
+                  for (var i = 0; i < totalRows; ++i) {
 
                     /** Add the table data to main data array */
-                    var c = $(table.tBodies[0].rows[i]),
-                        cols = [];
+                    var c = $(table.tBodies[j].rows[i]);
 
                     // if this is a child row, add it to the last row's children and
                     // continue to the next row
                     if (c.hasClass(table.config.cssChildRow)) {
-                        cache.row[cache.row.length - 1] = cache.row[cache.row.length - 1].add(c);
+                        tbodyRow[tbodyRow.length - 1] = tbodyRow[tbodyRow.length - 1].add(c);
                         // go to the next for loop
                         continue;
                     }
 
-                    cache.row.push(c);
+                    var cols = [];
 
-                    for (var j = 0; j < totalCells; ++j) {
-                        cols.push(parsers[j].format(getElementText(table.config, c[0].cells[j]), table, c[0].cells[j]));
+                    for (var m = 0; m < totalCells; m++) {
+                        cols.push(parsers[m].format(getElementText(table.config, c[0].cells[m]), table, c[0].cells[m]));
                     }
 
-                    cols.push(cache.normalized.length); // add position for rowCache
-                    cache.normalized.push(cols);
+                    cols.push(tbodyNormalized.length); // add position for rowCache
+
+                    tbodyRow.push(c);
+                    tbodyNormalized.push(cols);
                     cols = null;
-                };
+                  }
+
+                  cache.row.push(tbodyRow);
+                  cache.normalized.push(tbodyNormalized);
+                }
 
                 if (table.config.debug) {
                     benchmark("Building cache for " + totalRows + " rows:", cacheTime);
                 }
 
+
+                window.cache = cache;
                 return cache;
             };
 
@@ -325,32 +351,35 @@
                     var appendTime = new Date()
                 }
 
-                var c = cache,
-                    r = c.row,
-                    n = c.normalized,
-                    totalRows = n.length,
-                    checkCell = (n[0].length - 1),
-                    tableBody = $(table.tBodies[0]),
-                    rows = [];
+                var r = cache.row,
+                    n = cache.normalized;
+
+                var c = 0;
+
+                for(var j = 0, k = table.tBodies.length; j < k; j++) {
+
+                  var totalRows = n[c].length,
+                      tableBody = $(table.tBodies[j]),
+                      rows = [];
+
+                  if($(tableBody).hasClass(table.config.cssGroupHeader)) {
+                    continue;
+                  }
 
 
-                for (var i = 0; i < totalRows; i++) {
-                    var pos = n[i][checkCell];
+                  for (var i = 0; i < totalRows; i++) {
+                    var checkCell = (n[c][0].length - 1);
+                    var pos = n[c][i][checkCell];
+
 
                     rows.push(r[pos]);
 
                     if (!table.config.appender) {
-
-                        //var o = ;
-                        var l = r[pos].length;
-                        for (var j = 0; j < l; j++) {
-                            tableBody[0].appendChild(r[pos][j]);
-                        }
-
-                        // 
+                        tableBody[0].appendChild(r[c][pos][0]);
                     }
+                  }
+                  c++;
                 }
-
 
 
                 if (table.config.appender) {
@@ -607,27 +636,30 @@
 
                 }
 
-                // if value is the same keep orignal order
-                var orgOrderCol = cache.normalized[0].length - 1;
-                dynamicExp += "return a[" + orgOrderCol + "]-b[" + orgOrderCol + "];";
+                for(var j = 0, k = cache.normalized.length; j < k; j++) {
+                  // if value is the same keep orignal order
+                  var orgOrderCol = cache.normalized[j][0].length - 1;
+                  dynamicExpEach = dynamicExp + "return a[" + orgOrderCol + "]-b[" + orgOrderCol + "];";
 
-                for (var i = 0; i < l; i++) {
-                    dynamicExp += "}; ";
-                }
+                  for (var i = 0; i < l; i++) {
+                      dynamicExpEach += "}; ";
+                  }
 
-                dynamicExp += "return 0; ";
-                dynamicExp += "}; ";
+                  dynamicExpEach += "return 0; ";
+                  dynamicExpEach += "}; ";
 
-                if (table.config.debug) {
-                    benchmark("Evaling expression:" + dynamicExp, new Date());
-                }
+                  if (table.config.debug) {
+                      benchmark("Evaling expression:" + dynamicExpEach, new Date());
+                  }
 
-                eval(dynamicExp);
+                  eval(dynamicExpEach);
 
-                cache.normalized.sort(sortWrapper);
+                  cache.normalized[j].sort(sortWrapper);
 
-                if (table.config.debug) {
-                    benchmark("Sorting on " + sortList.toString() + " and dir " + order + " time:", sortTime);
+                  if (table.config.debug) {
+                      benchmark("Sorting on " + sortList.toString() + " and dir " + order + " time:", sortTime);
+                  }
+
                 }
 
                 return cache;
@@ -703,8 +735,10 @@
                     $headers = buildHeaders(this);
                     // try to auto detect column type, and store in tables config
                     this.config.parsers = buildParserCache(this, $headers);
+
                     // build the cache for the tbody cells
                     cache = buildCache(this);
+
                     // get the css class names, could be done else where.
                     var sortCSS = [config.cssDesc, config.cssAsc];
                     // fixate columns if the users supplies the fixedWidth option
@@ -770,7 +804,7 @@
                                 appendToTable(
 	                                $this[0], multisort(
 	                                $this[0], config.sortList, cache)
-								);
+                                );
                             }, 1);
                             // stop normal event by returning false
                             return false;
