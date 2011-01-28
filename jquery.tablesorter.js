@@ -141,7 +141,7 @@
 
             function benchmark(s, d) {
                 log(s + "," + (new Date().getTime() - d.getTime()) + "ms");
-            }
+            };
 
             this.benchmark = benchmark;
 
@@ -151,7 +151,7 @@
                 } else {
                     alert(s);
                 }
-            }
+            };
 
             /* parsers utils */
 
@@ -233,15 +233,15 @@
                 }
                 // 0 is always the generic parser (text)
                 return parsers[0];
-            }
+            };
 
             function getNodeFromRowAndCellIndex(rows, rowIndex, cellIndex) {
                 return rows[rowIndex].cells[cellIndex];
-            }
+            };
 
             function trimAndGetNodeText(config, node) {
                 return $.trim(getElementText(config, node));
-            }
+            };
 
             function getParserById(name) {
                 var l = parsers.length;
@@ -251,7 +251,7 @@
                     }
                 }
                 return false;
-            }
+            };
 
             /* utils */
 
@@ -341,7 +341,7 @@
                     }
                 }
                 return text;
-            }
+            };
 
             function appendToTable(table, cache) {
 
@@ -460,7 +460,7 @@
                         var rowIndex = c.parentNode.rowIndex;
                         var cellId = rowIndex + "-" + c.cellIndex;
                         var rowSpan = c.rowSpan || 1;
-                        var colSpan = c.colSpan || 1
+                        var colSpan = c.colSpan || 1;
                         var firstAvailCol;
                         if (typeof(matrix[rowIndex]) == "undefined") {
                             matrix[rowIndex] = [];
@@ -485,7 +485,7 @@
                     }
                 }
                 return lookup;
-            }
+            };
 
             function checkCellColSpan(table, rows, row) {
                 var arr = [],
@@ -512,20 +512,20 @@
                     return true;
                 };
                 return false;
-            }
+            };
 
             function checkHeaderOptions(table, i) {
                 if ((table.config.headers[i]) && (table.config.headers[i].sorter === false)) {
                     return true;
                 };
                 return false;
-            }
-			
-			 function checkHeaderOptionsSortingLocked(table, i) {
+            };
+
+            function checkHeaderOptionsSortingLocked(table, i) {
                 if ((table.config.headers[i]) && (table.config.headers[i].lockedOrder)) return table.config.headers[i].lockedOrder;
                 return false;
-            }
-			
+            };
+
             function applyWidget(table) {
                 var c = table.config.widgets;
                 var l = c.length;
@@ -534,7 +534,7 @@
                     getWidgetById(c[i]).format(table);
                 }
 
-            }
+            };
 
             function getWidgetById(name) {
                 var l = widgets.length;
@@ -893,8 +893,9 @@
             this.clearTableBody = function (table) {
                 if ($.browser.msie) {
                     function empty() {
-                        while (this.firstChild)
-                        this.removeChild(this.firstChild);
+                        while (this.firstChild) {
+                          this.removeChild(this.firstChild);
+                        }
                     }
                     empty.apply(table.tBodies[0]);
                 } else {
