@@ -312,8 +312,6 @@
                     benchmark("Building cache for " + totalRows + " rows:", cacheTime);
                 }
 
-
-                window.cache = cache;
                 return cache;
             };
 
