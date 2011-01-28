@@ -1047,15 +1047,21 @@
             var $tr, row = -1,
                 odd;
             // loop through the visible rows
-            $("tr:visible", table.tBodies[0]).each(function (i) {
+            $("tr:visible", table.tBodies).each(function (i) {
                 $tr = $(this);
+                
+                if($tr.parent().hasClass(table.config.cssGroupHeader)){
+                  row = -1;
+                  return;
+                }
+                
                 // style children rows the same way the parent
                 // row was styled
                 if (!$tr.hasClass(table.config.cssChildRow)) row++;
                 odd = (row % 2 == 0);
                 $tr.removeClass(
                 table.config.widgetZebra.css[odd ? 0 : 1]).addClass(
-                table.config.widgetZebra.css[odd ? 1 : 0])
+                table.config.widgetZebra.css[odd ? 1 : 0]);
             });
             if (table.config.debug) {
                 $.tablesorter.benchmark("Applying Zebra widget", time);
