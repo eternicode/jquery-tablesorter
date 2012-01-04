@@ -161,20 +161,25 @@
                     var parsersDebug = "";
                 }
 
-                if (table.tBodies.length == 0) return; // In the case of empty tables
+                if (table.tBodies.length == 0) return []; // In the case of empty tables
 
-                var tbody = table.tBodies[0];
+                // Seems IE7 lumps theads into the tBodies attribute?
+                var tbodies = [];
+                for (var i=0; i<table.tBodies.length; i++)
+                    if (table.tBodies[i].tagName.toLowerCase() == 'tbody')
+                        tbodies.push(table.tBodies[i]);
 
-                if($(tbody).hasClass(table.config.cssGroupHeader)) {
-                  tbody = table.tBodies[1];
-                }
+                var tbody = tbodies[0];
 
-                var rows = tbody.rows;
+                if ($(tbody).hasClass(table.config.cssGroupHeader))
+                    tbody = tbodies[1];
+
+                var rows = tbody.rows,
+                    list = [];
 
                 if (rows[0]) {
 
-                    var list = [],
-                        cells = rows[0].cells,
+                    var cells = rows[0].cells,
                         l = cells.length;
 
                     for (var i = 0; i < l; i++) {
